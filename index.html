@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thor - Voice Assistant</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome for Icons -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(135deg, #0a0a0a, #1c1c1c);
+      color: #00bfff;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Arial', sans-serif;
+    }
+    .assistant-container {
+      background: rgba(0, 0, 0, 0.7);
+      padding: 2rem;
+      border-radius: 15px;
+      border: 2px solid #00bfff;
+      box-shadow: 0 0 20px rgba(0, 191, 255, 0.5);
+      backdrop-filter: blur(10px);
+      text-align: center;
+    }
+    h1 {
+      font-size: 3rem;
+      font-weight: bold;
+      text-shadow: 0 0 10px #00bfff;
+    }
+    #start-btn {
+      background: #00bfff;
+      color: #000;
+      border: none;
+      padding: 1rem 2rem;
+      font-size: 1.2rem;
+      border-radius: 50px;
+      box-shadow: 0 0 15px rgba(0, 191, 255, 0.7);
+      transition: all 0.3s ease;
+    }
+    #start-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 25px rgba(0, 191, 255, 1);
+    }
+    #output {
+      margin-top: 1.5rem;
+      font-size: 1.2rem;
+      color: #00bfff;
+      text-shadow: 0 0 5px #00bfff;
+    }
+    .thor-icon {
+      font-size: 4rem;
+      color: #00bfff;
+      text-shadow: 0 0 10px #00bfff;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="assistant-container">
+    <div class="thor-icon">
+      <i class="fas fa-bolt"></i> <!-- Thor's lightning icon -->
+    </div>
+    <h1>Thor</h1>
+    <p>Your Asgardian Voice Assistant</p>
+    <button id="start-btn" class="btn btn-lg">🎤 Start Listening</button>
+    <p id="output" class="mt-3"></p>
+  </div>
+
+  <!-- Bootstrap JS and dependencies -->
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+  <script>
+    const startBtn = document.getElementById('start-btn');
+    const output = document.getElementById('output');
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+
+    startBtn.addEventListener('click', () => {
+      recognition.start();
+      output.textContent = "Listening...";
+    });
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      output.textContent = `You said: ${transcript}`;
+      processCommand(transcript); // Process the command
+    };
+
+    recognition.onerror = (event) => {
+      output.textContent = "Error occurred. Please try again.";
+    };
+
+    function speak(text) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      window.speechSynthesis.speak(utterance);
+    }
+
+    async function callDeepSeekAPI(prompt) {
+      const apiKey = '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'; // Replace with your API key
+      const apiUrl = 'https://api.groq.com/openai/v1/chat/completions'; // Example endpoint
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile', // Specify the model
+          messages: [{ role: 'user', content: prompt }],
+          max_tokens: 100, // Adjust as needed
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return data.choices[0].message.content; // Extract the response text
+    }
+
+    async function processCommand(command) {
+  command = command.toLowerCase().trim();
+  let response = "I didn't understand that.";
+
+  if (command.includes("hello")) {
+    response = "Greetings, mortal. I am Thor, Son of Odin. How may I assist you?";
+  } else if (command.includes("time")) {
+    const time = new Date().toLocaleTimeString();
+    response = `The time is ${time}. Use it wisely, for time is precious.`;
+  } else if (command.includes("weather")) {
+    response = "I control the storms, but even I cannot predict Midgard's weather right now.";
+  } else if (command.includes("thor")) {
+    response = "I am Thor, God of Thunder. Speak, and I shall answer!";
+  } else if (command.includes("hammer")) {
+    response = "Mjolnir is the mightiest weapon in all the Nine Realms. Worthy ones may wield it.";
+  } else if (command.includes("open browser")) {
+    const url = "https://www.google.com"; // Default URL
+    window.open(url, "_blank");
+    response = "Opening the browser for you, mortal.";
+  } else if (command.startsWith("hey thor open")) {
+    let website = command.replace("hey thor open", "").trim().toLowerCase();
+
+    if (website) {
+        let url = "";
+
+        // Handle common website names
+        const websiteMap = {
+            "youtube": "https://www.youtube.com",
+            "google": "https://www.google.com",
+            "facebook": "https://www.facebook.com",
+            "twitter": "https://www.twitter.com",
+            "linkedin": "https://www.linkedin.com",
+            "instagram": "https://www.instagram.com",
+            "github": "https://www.github.com",
+            "netflix": "https://www.netflix.com",
+            "amazon": "https://www.amazon.com"
+        };
+
+        if (websiteMap[website]) {
+            url = websiteMap[website]; // Use predefined URL for common websites
+        } else {
+            url = `https://www.${website}.com`; // Default case (may not always work)
+        }
+
+        window.open(url, "_blank");
+        response = `Opening ${website} for you, mortal.`;
+    } else {
+        response = "Tell me what to open.";
+    }
+}
+
+  output.textContent = response;
+  speak(response); // Respond with voice
+}
+
+
+    
+    function openBrowser(url) {
+      let command;
+
+      if (process.platform === 'win32') {
+        command = `start ${url}`; // Windows
+      } else if (process.platform === 'darwin') {
+        command = `open ${url}`; // macOS
+      } else {
+        command = `xdg-open ${url}`; // Linux
+      }
+
+      exec(command, (error) => {
+        if (error) {
+          console.error(`Error opening browser: ${error.message}`);
+        }
+      });
+    }
+  </script>
+</body>
+</html>
